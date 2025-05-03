@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "ProTechXionRN",
+    "slug": "ProTechXionRN",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/protechxion-logo.jpeg",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/protechxion-logo.jpeg",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.protechxion.mobile",
+      "config": {
+        "googleSignIn": {
+          "reservedClientId": "com.googleusercontent.apps.569067782002-jpljcebfkovh5f9renjtea9t31kl8ac"
+        }
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/protechxion-logo.jpeg",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.protechxion.mobile"
+    },
+    "web": {
+      "favicon": "./assets/protechxion-logo.jpeg"
+    },
+    "scheme": "protechxionrn",
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
+    "fonts": [
+      {
+        "asset": "./assets/fonts/Poppins-Regular.ttf",
+        "family": "Poppins"
+      },
+      {
+        "asset": "./assets/fonts/Poppins-Bold.ttf",
+        "family": "Poppins",
+        "weight": "700"
+      },
+      {
+        "asset": "./assets/fonts/Poppins-Medium.ttf",
+        "family": "Poppins",
+        "weight": "500"
+      }
+    ],
+    "newArchEnabled": true
+  }
+}
