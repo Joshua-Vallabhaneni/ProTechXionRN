@@ -109,20 +109,6 @@ const FacultyAlertScreen: React.FC = () => {
   }, [alert.threatDetected]); // Re-run if threat detection status changes
   */
 
-  // Function to test the Firebase connection
-  const testFirebaseConnection = async () => {
-    console.log("Testing Firebase connection");
-    
-    // Try to fetch the image directly
-    const imagePath = await fetchShooterImage();
-    console.log("Image path:", imagePath);
-    
-    if (imagePath) {
-      // Update the shooter image in the AlertContext
-      alert.setShooterImage(imagePath);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Faculty Alert Center</Text>
@@ -195,15 +181,6 @@ const FacultyAlertScreen: React.FC = () => {
             </TouchableOpacity>
             
             <Text style={styles.reportButtonLabel}>Report Threat</Text>
-            
-            {/* Test Firebase connection button */}
-            <TouchableOpacity 
-              style={[styles.reportButton, { marginTop: 30, backgroundColor: COLORS.primary }]}
-              onPress={testFirebaseConnection}
-            >
-              <Text style={styles.reportButtonText}>T</Text>
-            </TouchableOpacity>
-            <Text style={styles.reportHelpText}>Test</Text>
           </View>
         )}
       </View>

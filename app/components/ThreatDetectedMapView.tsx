@@ -238,14 +238,14 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   shooterMarker: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: '#e53935',
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    transform: [{ translateX: -15 }, { translateY: -15 }],
+    transform: [{ translateX: -10 }, { translateY: -10 }],
   },
   shooterText: {
     color: 'white',

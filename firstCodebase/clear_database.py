@@ -25,6 +25,7 @@ def clear_all_collections():
     clear_collection(COLLECTIONS.SHOOTER_IMAGE)
     clear_collection(COLLECTIONS.SHOOTER_VERIFICATION)
     clear_collection(COLLECTIONS.SHOOTER_COORDINATES)
+    clear_collection(COLLECTIONS.LAST_DETECTED_LOCATION)  # Add the new collection
     
     print("✅ Database cleanup complete! All collections have been cleared.")
     print("You can now start testing with a fresh database.")

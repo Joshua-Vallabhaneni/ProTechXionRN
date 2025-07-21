@@ -1,0 +1,15 @@
+{
+  "name": "shooter-detection-simulator",
+  "version": "1.0.0",
+  "description": "Shooter detection system simulator for test purposes",
+  "main": "detection-system-simulator.js",
+  "scripts": {
+    "create-image": "node create-sample-image.js",
+    "start": "node detection-system-simulator.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "firebase": "^9.22.0"
+  }
+} 

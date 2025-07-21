@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import Firebase functions
 import firebaseConfig, { COLLECTIONS, getLatestDocument, addDocument } from '../config/firebaseConfig';
+import { getDatabase, ref, get } from 'firebase/database';
 
 // Define interfaces for our Firebase documents
 interface ShooterImageDocument {
@@ -140,7 +141,8 @@ export async function hasNewShooterImage(): Promise<boolean> {
  */
 export function startPolling(
   onNewImage?: (imagePath: string, imageData?: ShooterImageDocument) => void,
-  onNewCoordinates?: (coordinates: {x: number, y: number, timestamp: number}) => void,
+  onNewCoordinates?: (coordinates: {x: number, y: number, timestamp: number} | null) => void,
+  onLastDetectedLocations?: (locations: Array<{x: number, y: number, timestamp: number}>) => void,
   pollingInterval: number = 1000
 ): () => void {
   let isPolling = true;
@@ -177,6 +179,20 @@ export function startPolling(
         const coordinates = await fetchShooterCoordinates();
         if (coordinates) {
           onNewCoordinates(coordinates);
+        } else {
+          // Database is empty - notify to clear coordinates
+          onNewCoordinates(null as any);
+        }
+      }
+      
+      // NEW: Check for last detected locations
+      if (onLastDetectedLocations) {
+        const locations = await fetchLastDetectedLocations();
+        if (locations && locations.length > 0) {
+          onLastDetectedLocations(locations);
+        } else {
+          // Database is empty - notify to clear last detected locations
+          onLastDetectedLocations([]);
         }
       }
     } catch (error) {
@@ -196,3 +212,44 @@ export function startPolling(
     // Firebase connections are automatically managed
   };
 } 
+
+/**
+ * Fetch all last detected locations
+ * @returns Promise with array of last detected locations
+ */
+export async function fetchLastDetectedLocations(): Promise<Array<{x: number, y: number, timestamp: number}> | null> {
+  try {
+    // Get all last detected locations from Firebase without using orderBy to avoid index requirement
+    const database = getDatabase();
+    const locationsRef = ref(database, COLLECTIONS.LAST_DETECTED_LOCATION);
+    const snapshot = await get(locationsRef);
+    
+    if (!snapshot.exists()) {
+      return [];
+    }
+    
+    // Convert to array and sort by timestamp locally
+    const locations: Array<{x: number, y: number, timestamp: number}> = [];
+    snapshot.forEach((childSnapshot: any) => {
+      const data = childSnapshot.val();
+      if (data && typeof data.x === 'number' && typeof data.y === 'number' && typeof data.timestamp === 'number') {
+        locations.push({
+          x: data.x,
+          y: data.y,
+          timestamp: data.timestamp
+        });
+      }
+    });
+    
+    // Sort by timestamp (newest first) - b.timestamp > a.timestamp means newer first
+    locations.sort((a, b) => b.timestamp - a.timestamp);
+    
+    console.log(`Fetched ${locations.length} last detected locations:`, locations.map(l => `(${l.x}, ${l.y}) at ${new Date(l.timestamp).toLocaleTimeString()}`));
+    
+    return locations;
+  } catch (error) {
+    console.error('Error fetching last detected locations:', error);
+    return null;
+  }
+} 
+

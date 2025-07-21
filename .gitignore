@@ -35,22 +35,3 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-venv/
-ENV/
-
-# Large data files
-*.npy
-coordinates/
-
-# IDE files
-.idea/
-.vscode/
-
-# Build files
-build/

@@ -49,6 +49,10 @@ def send_shooter_image():
         print(f"[DEBUG] Image data size: {len(base64_data)} characters")
         print(f"[DEBUG] First 50 chars of base64: {base64_data[:50]}...")
         
+        # Create a data URI format that the app expects
+        # The app is expecting a data URI format like 'data:image/png;base64,...'
+        # but we're just sending the raw base64 data
+        
         # Save to database using Firebase
         image_doc = add_document(COLLECTIONS.SHOOTER_IMAGE, {
             'base64Data': base64_data,

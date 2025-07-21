@@ -14,6 +14,7 @@ class COLLECTIONS:
     SHOOTER_IMAGE = 'ShooterImage'
     SHOOTER_VERIFICATION = 'ShooterVerification'
     SHOOTER_COORDINATES = 'ShooterCoordinates'
+    LAST_DETECTED_LOCATION = 'LastDetectedLocation' 
 
 # Firebase configuration
 firebase_config = {
@@ -165,6 +166,8 @@ def cleanup_old_entries(collection):
             retain_count = 5   # Keep the latest 5 verification entries
         elif collection == COLLECTIONS.SHOOTER_IMAGE:
             retain_count = 3   # Keep the latest 3 images
+        elif collection == COLLECTIONS.LAST_DETECTED_LOCATION:  
+            retain_count = 20  # Keep the latest 20 last detected locations
         
         # Get all documents sorted by timestamp (newest first)
         items = get_documents_sorted(collection, 'timestamp', ascending=False)

@@ -21,7 +21,8 @@ const ShooterDetectionHandler: React.FC<ShooterDetectionHandlerProps> = ({
       // You could trigger an alert or notification here
     },
     onCoordinatesReceived: (coords) => {
-      console.log('New shooter coordinates received:', coords);
+      // Removed console.log to reduce terminal spam
+      // The coordinates are already being logged in AlertContext when they change
     }
   });
 
