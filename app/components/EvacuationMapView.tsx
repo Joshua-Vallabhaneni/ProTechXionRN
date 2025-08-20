@@ -21,6 +21,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
 import { getLatestDocument, listenForChanges } from '../config/firebaseConfig';
+import { parseBatchCoordinates } from '../utils/dbCommunication';
 import { useAlert } from '../context/AlertContext';
 
 // Get screen dimensions for responsive sizing
@@ -56,6 +57,10 @@ const EvacuationMapView: React.FC<Props> = ({ initialThreatState = false }) => {
   
   // Keep shooter position state
   const [shooterPosition, setShooterPosition] = useState({ x: 151, y: 225 });
+  
+  // State to track all coordinates for display
+  const [currentShooterDots, setCurrentShooterDots] = useState<Array<{x: number, y: number, id: string}>>([]);
+  const [lostShooterDots, setLostShooterDots] = useState<Array<{x: number, y: number, id: string}>>([]);
   
   // Camera coordinate system to map coordinate system transformation
   const transformCameraToMapCoordinates = (cameraX: number, cameraY: number): {x: number, y: number} => {
@@ -152,91 +157,57 @@ const EvacuationMapView: React.FC<Props> = ({ initialThreatState = false }) => {
     // Try both potential path names to ensure we catch the coordinates
     console.log('EvacuationMapView: Setting up Firebase listeners for coordinates');
     
-    // Listen on ShooterCoordinates (matches Firebase rules)
+    // Listen to current shooter coordinates (RED dots)
     const unsubscribe1 = listenForChanges('ShooterCoordinates', (data: any) => {
-      console.log('EvacuationMapView: Received data from ShooterCoordinates:', data);
+      console.log('EvacuationMapView: Received current shooter data:', data);
       
-      // Check if data is an array (most likely case based on logs)
       if (Array.isArray(data) && data.length > 0) {
-        // Find the most recent coordinate by timestamp
-        let mostRecent = data[0];
-        data.forEach((item: any) => {
-          if (item && item.timestamp && item.timestamp > (mostRecent.timestamp || 0)) {
-            mostRecent = item;
-          }
-        });
+        // Get the most recent batch document
+        const latestBatch = data[0];
+        const coordinates = parseBatchCoordinates(latestBatch);
         
-        if (mostRecent && typeof mostRecent.x === 'number' && typeof mostRecent.y === 'number') {
-          // Transform camera coordinates to map coordinates
-          const mapPosition = transformCameraToMapCoordinates(mostRecent.x, mostRecent.y);
-          console.log('EvacuationMapView: Using most recent coordinates:', mostRecent.x, mostRecent.y);
-          console.log('EvacuationMapView: Transformed to map coordinates:', mapPosition.x, mapPosition.y);
-          
-          // Update the shooter position on the map
-          animatedX.setValue(mapPosition.x);
-          animatedY.setValue(mapPosition.y);
-          setShooterPosition(mapPosition);
-          return; // Exit early after processing
+        // Transform coordinates and update red dots
+        const transformedDots = coordinates.map(coord => ({
+          x: transformCameraToMapCoordinates(coord.x, coord.y).x,
+          y: transformCameraToMapCoordinates(coord.x, coord.y).y,
+          id: coord.shooterId
+        }));
+        
+        setCurrentShooterDots(transformedDots);
+        console.log('EvacuationMapView: Updated current shooter dots:', transformedDots.length);
+        
+        // Update main shooter position with first dot for backward compatibility
+        if (transformedDots.length > 0) {
+          const firstDot = transformedDots[0];
+          animatedX.setValue(firstDot.x);
+          animatedY.setValue(firstDot.y);
+          setShooterPosition({ x: firstDot.x, y: firstDot.y });
         }
-      }
-      
-      // Fallback for single object format
-      if (data && typeof data.x === 'number' && typeof data.y === 'number') {
-        // Transform camera coordinates to map coordinates
-        const mapPosition = transformCameraToMapCoordinates(data.x, data.y);
-        console.log('EvacuationMapView: New Firebase coordinates:', data.x, data.y);
-        console.log('EvacuationMapView: Transformed to map coordinates:', mapPosition.x, mapPosition.y);
-        
-        // Update the shooter position on the map
-        animatedX.setValue(mapPosition.x);
-        animatedY.setValue(mapPosition.y);
-        setShooterPosition(mapPosition);
       } else {
-        console.log('EvacuationMapView: Invalid data format received from Firebase:', data);
+        setCurrentShooterDots([]);
       }
     });
     
-    // Also listen on SHOOTER_COORDINATES (all caps, from memory info)
-    const unsubscribe2 = listenForChanges('SHOOTER_COORDINATES', (data: any) => {
-      console.log('EvacuationMapView: Received data from SHOOTER_COORDINATES:', data);
+    // Listen to lost shooter coordinates (ORANGE dots)  
+    const unsubscribe2 = listenForChanges('LostShooterCoordinates', (data: any) => {
+      console.log('EvacuationMapView: Received lost shooter data:', data);
       
-      // Check if data is an array (most likely case based on logs)
       if (Array.isArray(data) && data.length > 0) {
-        // Find the most recent coordinate by timestamp
-        let mostRecent = data[0];
-        data.forEach((item: any) => {
-          if (item && item.timestamp && item.timestamp > (mostRecent.timestamp || 0)) {
-            mostRecent = item;
-          }
-        });
+        // Get the most recent batch document
+        const latestBatch = data[0];
+        const coordinates = parseBatchCoordinates(latestBatch);
         
-        if (mostRecent && typeof mostRecent.x === 'number' && typeof mostRecent.y === 'number') {
-          // Transform camera coordinates to map coordinates
-          const mapPosition = transformCameraToMapCoordinates(mostRecent.x, mostRecent.y);
-          console.log('EvacuationMapView: Using most recent coordinates (UPPERCASE):', mostRecent.x, mostRecent.y);
-          console.log('EvacuationMapView: Transformed to map coordinates:', mapPosition.x, mapPosition.y);
-          
-          // Update the shooter position on the map
-          animatedX.setValue(mapPosition.x);
-          animatedY.setValue(mapPosition.y);
-          setShooterPosition(mapPosition);
-          return; // Exit early after processing
-        }
-      }
-      
-      // Fallback for single object format
-      if (data && typeof data.x === 'number' && typeof data.y === 'number') {
-        // Transform camera coordinates to map coordinates
-        const mapPosition = transformCameraToMapCoordinates(data.x, data.y);
-        console.log('EvacuationMapView: New Firebase coordinates (UPPERCASE):', data.x, data.y);
-        console.log('EvacuationMapView: Transformed to map coordinates:', mapPosition.x, mapPosition.y);
+        // Transform coordinates and update orange dots
+        const transformedDots = coordinates.map(coord => ({
+          x: transformCameraToMapCoordinates(coord.x, coord.y).x,
+          y: transformCameraToMapCoordinates(coord.x, coord.y).y,
+          id: coord.shooterId
+        }));
         
-        // Update the shooter position on the map
-        animatedX.setValue(mapPosition.x);
-        animatedY.setValue(mapPosition.y);
-        setShooterPosition(mapPosition);
+        setLostShooterDots(transformedDots);
+        console.log('EvacuationMapView: Updated lost shooter dots:', transformedDots.length);
       } else {
-        console.log('EvacuationMapView: Invalid data format received from Firebase (UPPERCASE):', data);
+        setLostShooterDots([]);
       }
     });
     
@@ -433,64 +404,45 @@ const EvacuationMapView: React.FC<Props> = ({ initialThreatState = false }) => {
               />
             </View>
             
-            {/* The shooter marker in a separate container to ensure it's on top */}
-            {fullscreenMap === 'first' && (
-              <Animated.View 
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  left: animatedX, 
-                  top: animatedY,
-                  width: 15,
-                  height: 15,
-                  borderRadius: 7.5,
-                  backgroundColor: '#FF0000',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.8,
-                  shadowRadius: 3,
-                  elevation: 10,
-                  transform: [{ translateX: -7.5 }, { translateY: -7.5 }],
-                  zIndex: 9999
-                }}
-              >
-              </Animated.View>
-            )}
 
-            {/* Last detected locations (orange dots) in fullscreen */}
-            {fullscreenMap === 'first' && alert.lastDetectedLocations.map((location, index) => {
-              const mapPosition = transformCameraToMapCoordinates(location.x, location.y);
-              return (
-                <View
-                  key={`fullscreen-last-location-${index}-${location.timestamp}`}
-                  pointerEvents="none"
-                  style={{
+
+            {/* Current Shooter Dots (RED) in fullscreen */}
+            {fullscreenMap === 'first' && currentShooterDots.map((dot, index) => (
+              <View
+                key={`fullscreen-current-${dot.id}-${index}`}
+                pointerEvents="none"
+                style={[
+                  styles.shooterDot,
+                  {
+                    left: dot.x,
+                    top: dot.y,
+                    backgroundColor: 'red',
                     position: 'absolute',
-                    left: mapPosition.x - 8,
-                    top: mapPosition.y - 8,
-                    width: 16,
-                    height: 16,
-                    borderRadius: 8,
+                    zIndex: 1000,
+                  }
+                ]}
+              />
+            ))}
+
+            {/* Lost Shooter Dots (ORANGE) in fullscreen */}
+            {fullscreenMap === 'first' && lostShooterDots.map((dot, index) => (
+              <View
+                key={`fullscreen-lost-${dot.id}-${index}`}
+                pointerEvents="none"
+                style={[
+                  styles.shooterDot,
+                  {
+                    left: dot.x,
+                    top: dot.y,
                     backgroundColor: 'orange',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    borderWidth: 2,
-                    borderColor: 'white',
-                    zIndex: 998,
-                    elevation: 8,
-                  }}
-                >
-                  <Text style={{
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: 10,
-                    textAlign: 'center',
-                  }}>L</Text>
-                </View>
-              );
-            })}
+                    position: 'absolute',
+                    zIndex: 1000,
+                  }
+                ]}
+              />
+            ))}
+
+
 
             {/* Green vertical floor label */}
             <View style={styles.verticalLabelStrip}>
@@ -548,44 +500,39 @@ const EvacuationMapView: React.FC<Props> = ({ initialThreatState = false }) => {
           resizeMode="contain"
         />
         
-        {/* Current threat position (red dot) */}
-        {alert.shooterCoordinates && (
-          <Animated.View
+
+
+        {/* Current Shooter Dots (RED) */}
+        {currentShooterDots.map((dot, index) => (
+          <View
+            key={`current-${dot.id}-${index}`}
             style={[
-              styles.threatDot,
+              styles.shooterDot,
               {
-                left: animatedX,
-                top: animatedY,
-                transform: [
-                  { translateX: -15 },
-                  { translateY: -15 }
-                ]
+                left: dot.x,
+                top: dot.y,
+                backgroundColor: 'red',
               }
             ]}
-          >
-            <Text style={styles.threatText}>!</Text>
-          </Animated.View>
-        )}
+          />
+        ))}
+
+        {/* Lost Shooter Dots (ORANGE) */}
+        {lostShooterDots.map((dot, index) => (
+          <View
+            key={`lost-${dot.id}-${index}`}
+            style={[
+              styles.shooterDot,
+              {
+                left: dot.x,
+                top: dot.y,
+                backgroundColor: 'orange',
+              }
+            ]}
+          />
+        ))}
         
-        {/* Last detected locations (orange dots) */}
-        {alert.lastDetectedLocations.map((location, index) => {
-          const mapPosition = transformCameraToMapCoordinates(location.x, location.y);
-          return (
-            <View
-              key={`last-location-${index}-${location.timestamp}`}
-              style={[
-                styles.lastDetectedMarker,
-                {
-                  left: mapPosition.x - 8,
-                  top: mapPosition.y - 8,
-                  position: 'absolute'
-                }
-              ]}
-            >
-              <Text style={styles.lastDetectedText}>L</Text>
-            </View>
-          );
-        })}
+
         
         {/* Debug: Show total count of last detected locations */}
         {alert.lastDetectedLocations.length > 0 && (
@@ -994,6 +941,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 10,
     textAlign: 'center',
+  },
+  shooterDot: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'white',
+    zIndex: 1000,
   },
 });
 

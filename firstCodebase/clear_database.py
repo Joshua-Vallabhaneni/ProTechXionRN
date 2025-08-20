@@ -4,7 +4,7 @@ Utility script to clear all entries in the Firebase database (Python version)
 """
 
 import requests
-from firebase_config import COLLECTIONS, FIREBASE_DB_URL
+from firebase_config_backend import COLLECTIONS, FIREBASE_DB_URL
 
 def clear_collection(collection):
     """Clear all entries in a specific collection"""

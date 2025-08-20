@@ -10,7 +10,7 @@ import base64
 from PIL import Image
 import io
 import threading
-from firebase_config import COLLECTIONS, add_document, get_latest_document
+from firebase_config_backend import COLLECTIONS, add_document, get_latest_document
 
 # Path to sample image - we'll use a placeholder image for testing
 SAMPLE_IMAGE_PATH = os.path.join(os.path.dirname(__file__), 'sample-shooter.png')

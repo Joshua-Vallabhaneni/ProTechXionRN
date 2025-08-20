@@ -13,9 +13,9 @@ import base64
 from PIL import Image
 import io
 import threading
-from firebase_config import add_document, get_latest_document
+from firebase_config_backend import add_document, get_latest_document
 from concurrent.futures import ThreadPoolExecutor
-from firebase_config import COLLECTIONS, FIREBASE_DB_URL
+from firebase_config_backend import COLLECTIONS, FIREBASE_DB_URL
 import requests
 import shutil
 

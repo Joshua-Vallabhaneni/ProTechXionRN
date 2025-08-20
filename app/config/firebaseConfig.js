@@ -24,8 +24,7 @@ export const COLLECTIONS = {
   SHOOTER_IMAGE: 'ShooterImage',
   SHOOTER_VERIFICATION: 'ShooterVerification',
   SHOOTER_COORDINATES: 'ShooterCoordinates',
-  LAST_DETECTED_LOCATION: 'LastDetectedLocation' 
-
+  LOST_SHOOTER_COORDINATES: 'LostShooterCoordinates'
 };
 
 // Initialize Firebase
